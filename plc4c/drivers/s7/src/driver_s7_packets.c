@@ -56,6 +56,7 @@ void plc4c_add_data_to_request(plc4c_data* parsed_value,
   for (i = 0 ; i < items ; i++) {
     if (parsed_value->data_type == PLC4C_LIST) {
       // will not work with nested lists if thats even a thing
+      // NB. the sonarcloud bug flag is invalid (requires x=TRUE && x=FALSE) 
       list_array = (i == 0) ? parsed_value->data.list_value.head : list_array->previous;
       the_data = list_array->value;
       item_size = the_data->size;
@@ -612,6 +613,7 @@ plc4c_return_code plc4c_driver_s7_create_s7_identify_remote_request(
   payload_item->szl_index = 0x0000;
   payload_item->szl_id = malloc(sizeof(plc4c_s7_read_write_szl_id));
   if (payload_item->szl_id == NULL) {
+    free(payload_item);
     return NO_MEMORY;
   }
   payload_item->szl_id->type_class =
@@ -722,6 +724,7 @@ plc4c_return_code plc4c_driver_s7_create_s7_read_request(
     updated_item_address->s7_var_request_parameter_item_address_address = 
         malloc(sizeof(plc4c_s7_read_write_s7_address));
     if (updated_item_address->s7_var_request_parameter_item_address_address == NULL) {
+      free(updated_item_address);
       return NO_MEMORY;
     }
     // Memcpy inplace of fields assignment, as all fields where assigned
@@ -843,7 +846,6 @@ plc4c_return_code plc4c_driver_s7_create_s7_write_request(
     plc4c_data *parsed_value;
     plc4c_s7_read_write_s7_var_payload_data_item *request_value;
     plc4c_return_code return_code;
-    int8_t* data_array;
     
     // Set things off to a good start 
     return_code = OK;
@@ -862,8 +864,10 @@ plc4c_return_code plc4c_driver_s7_create_s7_write_request(
     request_param->_type = parsed_param->_type;
     request_param->s7_var_request_parameter_item_address_address = 
         malloc(sizeof(plc4c_s7_read_write_s7_address));
-    if (!request_param->s7_var_request_parameter_item_address_address)
+    if (!request_param->s7_var_request_parameter_item_address_address) {
+      free(request_param);
       return NO_MEMORY;
+    }
     
     memcpy(request_param->s7_var_request_parameter_item_address_address,
       parsed_param->s7_var_request_parameter_item_address_address, 

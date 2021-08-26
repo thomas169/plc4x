@@ -271,8 +271,10 @@ plc4c_return_code plc4c_system_create_connection(
     plc4c_connection_set_transport_code(new_connection, NULL);
   } else {
     connection_token = strtok_r(connection_string_pos, ":", &connection_string_pos);
-    if (strncmp(connection_string_pos, "//", 2) != 0)
+    if (strncmp(connection_string_pos, "//", 2) != 0) {
+      free(new_connection);
       return INVALID_CONNECTION_STRING;
+    }
     plc4c_connection_set_transport_code(new_connection, connection_token);
   }
 

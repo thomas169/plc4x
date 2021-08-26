@@ -38,6 +38,7 @@ extern int errno;
 
 plc4c_return_code plc4c_transport_tcp_configure_function(
     char* transport_connect_information, plc4c_list* parameters, void** configuration) {
+
   plc4c_transport_tcp_config* tcp_configuration = malloc(sizeof(plc4c_transport_tcp_config));
   if (tcp_configuration == NULL) {
     return NO_MEMORY;
@@ -49,6 +50,7 @@ plc4c_return_code plc4c_transport_tcp_configure_function(
   // If no port was specified, generally use the default port for this driver
   if (strlen(port) == 0) {
     // TODO: Currently return an error.
+    free(tcp_configuration);
     return INTERNAL_ERROR;
   } else {
     tcp_configuration->port = atoi(port);
@@ -132,8 +134,10 @@ plc4c_return_code plc4c_transport_tcp_select_message_function(
     return NO_MEMORY;
   }
   int received_bytes = recv(tcp_config->sockfd, size_buffer, min_size, 0);
+  
   // TODO: if the value is negative, it's more a "please remove this much of corrupt data" ...
   if(received_bytes < 0) {
+    free(size_buffer);
     return CONNECTION_ERROR;
   }
 
@@ -141,10 +145,12 @@ plc4c_return_code plc4c_transport_tcp_select_message_function(
   // the accept_message function find out how many
   int16_t message_size = accept_message(size_buffer, min_size);
   if(message_size < 0) {
+    free(size_buffer);
     return INTERNAL_ERROR;
   }
   uint8_t* message_buffer = malloc(sizeof(uint8_t) * message_size);
-  if(message_size < 0) {
+  if(message_buffer == NULL) {
+    free(size_buffer);
     return NO_MEMORY;
   }
 
